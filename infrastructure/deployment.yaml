@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-photo-album
+  namespace: YOUR_NAMESPACE
+  labels:
+    app: my-photo-album
+  # Tell Deployment to update iteslf when the ImageStreamTag changes
+  annotations:
+    image.openshift.io/triggers: >-
+      [
+        {
+          "from": {
+            "kind": "ImageStreamTag",
+            "name": "imagestream-photo-album:latest"
+          },
+          "fieldPath": "spec.template.spec.containers[?(@.name==\"photo-album\")].image"
+        }
+      ]
+spec:
+  # Tell Deployment how to find its Pod(s)
+  selector:
+    matchLabels:
+      app: my-photo-album
+  template:
+    # Label Pod(s) so Deployment can find them
+    metadata:
+      labels:
+        app: my-photo-album
+    spec:
+      containers:
+      - name: photo-album
+        # Point to image through the ImageStreamTag
+        image: imagestream-photo-album:latest
+        # Enable DEBUG logging on the static web server
+        env:
+        - name: DEBUG
+          value: "true"
+        # Specify upper and lower bounds for resource consumption
+        resources:
+          limits:
+            cpu: 300m
+            memory: 256Mi
+          requests:
+            cpu: 0m
+            memory: 0Mi
